@@ -39,6 +39,7 @@ logs/
 *.md
 !PROJECT_PRD.md
 !README.md
+!TODO.md
 
 # OS
 .DS_Store
