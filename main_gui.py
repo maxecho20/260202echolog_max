@@ -188,7 +188,7 @@ class HistoryItem(ctk.CTkFrame):
         )
         self.preview_label.pack(anchor="w", pady=(3, 0))
         
-        # Delete button - always packed but visibility controlled by opacity
+        # Delete button - not packed initially, shown on hover
         self._delete_btn = ctk.CTkButton(
             self,
             text="🗑️",
@@ -198,18 +198,17 @@ class HistoryItem(ctk.CTkFrame):
             corner_radius=17,
             fg_color="transparent",
             hover_color=Colors.DANGER,
-            text_color="transparent",  # Initially invisible
+            text_color=Colors.TEXT_MUTED,
             command=self._on_delete_click,
         )
-        self._delete_btn.pack(side="right", padx=10)
+        # Don't pack initially - will be shown on hover
         
         # Bind click events to left content area only (not delete button)
         for widget in [self, self.left_frame, self.time_label, self.preview_label]:
             widget.bind("<Button-1>", self._on_click)
         
-        # Bind hover events to all widgets including delete button
-        all_widgets = [self, self.left_frame, self.time_label, self.preview_label, self._delete_btn]
-        for widget in all_widgets:
+        # Bind hover events to main widgets
+        for widget in [self, self.left_frame, self.time_label, self.preview_label]:
             widget.bind("<Enter>", self._on_enter)
             widget.bind("<Leave>", self._on_leave)
             
@@ -232,18 +231,44 @@ class HistoryItem(ctk.CTkFrame):
             return False
             
     def _on_enter(self, event):
+        if self._is_hovered:
+            return
         self._is_hovered = True
         self.configure(fg_color="#F5F5F5")
         if self._delete_btn:
-            self._delete_btn.configure(text_color=Colors.TEXT_MUTED)
+            self._delete_btn.pack(side="right", padx=10)
+            # Bind hover events to delete button too
+            self._delete_btn.bind("<Enter>", self._on_enter)
+            self._delete_btn.bind("<Leave>", self._on_leave)
         
     def _on_leave(self, event):
-        # Only hide if mouse actually left the entire card
-        if not self._is_mouse_inside(event):
-            self._is_hovered = False
-            self.configure(fg_color=Colors.CONTENT_CARD)
-            if self._delete_btn:
-                self._delete_btn.configure(text_color="transparent")
+        # Schedule the check after a short delay to handle mouse moving between widgets
+        self.after(50, lambda: self._check_mouse_left(event))
+    
+    def _check_mouse_left(self, event):
+        """Check if mouse has actually left the card area"""
+        try:
+            # Get current mouse position
+            mouse_x = self.winfo_pointerx()
+            mouse_y = self.winfo_pointery()
+            
+            # Get card bounds
+            x = self.winfo_rootx()
+            y = self.winfo_rooty()
+            w = self.winfo_width()
+            h = self.winfo_height()
+            
+            # Check if mouse is inside
+            if x <= mouse_x <= x + w and y <= mouse_y <= y + h:
+                return  # Mouse still inside, don't hide
+        except:
+            pass
+        
+        # Mouse left the card
+        self._is_hovered = False
+        self.configure(fg_color=Colors.CONTENT_CARD)
+        if self._delete_btn:
+            self._delete_btn.pack_forget()
         
     def _on_click(self, event):
         if self.on_click:
@@ -642,31 +667,34 @@ class EchoLogApp(ctk.CTk):
         # Group by date
         current_date = None
         for filepath in files:
-            mod_time = datetime.fromtimestamp(filepath.stat().st_mtime)
-            date_str = mod_time.strftime("%Y年%m月%d日")
-            
-            # Check if we need a new date header
-            if date_str != current_date:
-                current_date = date_str
+            try:
+                mod_time = datetime.fromtimestamp(filepath.stat().st_mtime)
+                date_str = mod_time.strftime("%Y年%m月%d日")
                 
-                # Date header
-                date_label = ctk.CTkLabel(
+                # Check if we need a new date header
+                if date_str != current_date:
+                    current_date = date_str
+                    
+                    # Date header
+                    date_label = ctk.CTkLabel(
+                        self._history_scroll,
+                        text=date_str,
+                        font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+                        text_color=Colors.TEXT_SECONDARY,
+                        anchor="w",
+                    )
+                    date_label.pack(fill="x", pady=(15, 8))
+                    
+                # File item
+                item = HistoryItem(
                     self._history_scroll,
-                    text=date_str,
-                    font=ctk.CTkFont(family="Microsoft YaHei", size=13),
-                    text_color=Colors.TEXT_SECONDARY,
-                    anchor="w",
+                    filepath,
+                    on_click=self._open_file,
+                    on_delete=self._delete_file,
                 )
-                date_label.pack(fill="x", pady=(15, 8))
-                
-            # File item
-            item = HistoryItem(
-                self._history_scroll,
-                filepath,
-                on_click=self._open_file,
-                on_delete=self._delete_file,
-            )
-            item.pack(fill="x", pady=3)
+                item.pack(fill="x", pady=3)
+            except Exception as e:
+                print(f"[ERROR] Failed to create item for {filepath}: {e}")
             
     def _open_file(self, filepath: Path):
         """Open a file with default application"""
