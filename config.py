@@ -5,11 +5,35 @@ Manages all configuration settings for the application.
 """
 
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
+
+def get_app_root() -> Path:
+    """
+    Get the application root directory.
+    Works both in development and when packaged with PyInstaller.
+    """
+    if getattr(sys, 'frozen', False):
+        # Running as compiled/packaged executable
+        # sys.executable is the path to the EXE file
+        return Path(sys.executable).parent
+    else:
+        # Running in development
+        return Path(__file__).parent
+
+
+# Application root directory
+APP_ROOT = get_app_root()
+
 # Load environment variables from .env file
-load_dotenv()
+# Try to load from app root first (for packaged app)
+env_path = APP_ROOT / ".env"
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    load_dotenv()  # Fall back to default behavior
 
 
 # ========================================
@@ -75,7 +99,8 @@ class AudioConfig:
 class OutputConfig:
     """Output file configuration"""
     # Base directory for output files
-    OUTPUT_DIR = Path(__file__).parent / "output"
+    # Uses APP_ROOT to work correctly when packaged with PyInstaller
+    OUTPUT_DIR = APP_ROOT / "output"
     
     # File naming
     FILE_PREFIX = "echolog"
