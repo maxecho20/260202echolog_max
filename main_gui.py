@@ -11,7 +11,8 @@ import sys
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Tuple
+import re
 import webbrowser
 
 import customtkinter as ctk
@@ -122,6 +123,85 @@ class NavItem(ctk.CTkFrame):
             self.configure(fg_color="transparent")
             self.icon_label.configure(text_color=Colors.SIDEBAR_TEXT)
             self.text_label.configure(text_color=Colors.SIDEBAR_TEXT)
+
+
+# ========================================
+# Search Result Item Widget
+# ========================================
+class SearchResultItem(ctk.CTkFrame):
+    """Search result item showing matched content with context"""
+    
+    def __init__(self, parent, filepath: Path, match_context: str, keyword: str, 
+                 on_click=None, **kwargs):
+        super().__init__(parent, fg_color=Colors.CONTENT_CARD, corner_radius=8, **kwargs)
+        
+        self.filepath = filepath
+        self.on_click = on_click
+        self.keyword = keyword
+        
+        # Configure
+        self.configure(height=85, cursor="hand2")
+        self.pack_propagate(False)
+        
+        # Parse file info
+        mod_time = datetime.fromtimestamp(filepath.stat().st_mtime)
+        time_str = mod_time.strftime("%Y-%m-%d %H:%M")
+        
+        # Content frame
+        self.content_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.content_frame.pack(fill="both", expand=True, padx=15, pady=10)
+        
+        # Top row: filename and time
+        top_row = ctk.CTkFrame(self.content_frame, fg_color="transparent")
+        top_row.pack(fill="x")
+        
+        # Filename
+        self.name_label = ctk.CTkLabel(
+            top_row,
+            text=f"📄 {filepath.name}",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=13, weight="bold"),
+            text_color=Colors.TEXT_PRIMARY,
+            anchor="w",
+        )
+        self.name_label.pack(side="left")
+        
+        # Time
+        self.time_label = ctk.CTkLabel(
+            top_row,
+            text=time_str,
+            font=ctk.CTkFont(family="Microsoft YaHei", size=11),
+            text_color=Colors.TEXT_MUTED,
+            anchor="e",
+        )
+        self.time_label.pack(side="right")
+        
+        # Match context with highlighted keyword
+        self.context_label = ctk.CTkLabel(
+            self.content_frame,
+            text=f"...{match_context}...",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            text_color=Colors.TEXT_SECONDARY,
+            anchor="w",
+            wraplength=500,
+        )
+        self.context_label.pack(anchor="w", pady=(5, 0))
+        
+        # Bind click events
+        for widget in [self, self.content_frame, self.name_label, 
+                       self.time_label, self.context_label, top_row]:
+            widget.bind("<Button-1>", self._on_click)
+            widget.bind("<Enter>", self._on_enter)
+            widget.bind("<Leave>", self._on_leave)
+    
+    def _on_enter(self, event):
+        self.configure(fg_color=Colors.ACCENT_LIGHT)
+        
+    def _on_leave(self, event):
+        self.configure(fg_color=Colors.CONTENT_CARD)
+        
+    def _on_click(self, event):
+        if self.on_click:
+            self.on_click(self.filepath)
 
 
 # ========================================
@@ -624,6 +704,81 @@ class EchoLogApp(ctk.CTk):
             text_color=Colors.TEXT_SECONDARY,
         ).pack(anchor="w", pady=(5, 0))
         
+        # Search section
+        search_frame = ctk.CTkFrame(page, fg_color="transparent", height=50)
+        search_frame.pack(fill="x", padx=30, pady=(0, 15))
+        search_frame.pack_propagate(False)
+        
+        # Search icon and input container
+        search_container = ctk.CTkFrame(search_frame, fg_color=Colors.CONTENT_CARD, corner_radius=25, height=45)
+        search_container.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        search_container.pack_propagate(False)
+        
+        # Search icon
+        ctk.CTkLabel(
+            search_container,
+            text="🔍",
+            font=ctk.CTkFont(size=14),
+            text_color=Colors.TEXT_MUTED,
+        ).pack(side="left", padx=(15, 5), pady=8)
+        
+        # Search entry
+        self._search_var = ctk.StringVar()
+        self._search_entry = ctk.CTkEntry(
+            search_container,
+            placeholder_text="搜索关键词...",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            textvariable=self._search_var,
+            fg_color="transparent",
+            border_width=0,
+            height=35,
+        )
+        self._search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10), pady=5)
+        self._search_entry.bind("<Return>", lambda e: self._perform_search())
+        self._search_entry.bind("<KeyRelease>", self._on_search_key_release)
+        
+        # Clear button
+        self._search_clear_btn = ctk.CTkButton(
+            search_container,
+            text="✕",
+            font=ctk.CTkFont(size=12),
+            width=30,
+            height=30,
+            corner_radius=15,
+            fg_color="transparent",
+            hover_color=Colors.CONTENT_BORDER,
+            text_color=Colors.TEXT_MUTED,
+            command=self._clear_search,
+        )
+        # Don't pack initially - will show when there's text
+        
+        # Search button
+        ctk.CTkButton(
+            search_frame,
+            text="🔎 搜索",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            width=80,
+            height=40,
+            corner_radius=20,
+            fg_color=Colors.ACCENT,
+            hover_color=Colors.ACCENT_HOVER,
+            text_color="#FFFFFF",
+            command=self._perform_search,
+        ).pack(side="left")
+        
+        # Search result count label
+        self._search_count_label = ctk.CTkLabel(
+            page,
+            text="",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            text_color=Colors.TEXT_MUTED,
+        )
+        # Don't pack initially - will show when searching
+        
+        # Track search state
+        self._is_searching = False
+        self._search_results = []
+        
         # Scrollable history list
         self._history_scroll = ctk.CTkScrollableFrame(
             page,
@@ -756,6 +911,189 @@ class EchoLogApp(ctk.CTk):
         if imported_count > 0:
             self._refresh_history()
             messagebox.showinfo("导入成功", f"成功导入 {imported_count} 个文件")
+    
+    # ========================================
+    # Search Functions
+    # ========================================
+    
+    def _on_search_key_release(self, event):
+        """Handle key release in search entry"""
+        keyword = self._search_var.get().strip()
+        
+        # Show/hide clear button based on input
+        if keyword:
+            self._search_clear_btn.pack(side="right", padx=(0, 10))
+        else:
+            self._search_clear_btn.pack_forget()
+            # If user deleted all text, show normal list
+            if self._is_searching:
+                self._is_searching = False
+                self._search_count_label.pack_forget()
+                self._refresh_history()
+    
+    def _clear_search(self):
+        """Clear search and show normal history"""
+        self._search_var.set("")
+        self._search_clear_btn.pack_forget()
+        self._is_searching = False
+        self._search_count_label.pack_forget()
+        self._search_results = []
+        self._refresh_history()
+        self._search_entry.focus()
+    
+    def _perform_search(self):
+        """Perform search across all history files"""
+        keyword = self._search_var.get().strip()
+        
+        if not keyword:
+            self._clear_search()
+            return
+        
+        self._is_searching = True
+        self._search_results = []
+        
+        # Clear existing items
+        for widget in self._history_scroll.winfo_children():
+            widget.destroy()
+        
+        # Get all output files
+        output_dir = OutputConfig.OUTPUT_DIR
+        if not output_dir.exists():
+            self._show_no_results(keyword)
+            return
+        
+        files_md = list(output_dir.glob("*.md"))
+        files_txt = list(output_dir.glob("*.txt"))
+        files = files_md + files_txt
+        
+        if not files:
+            self._show_no_results(keyword)
+            return
+        
+        # Search in each file
+        for filepath in files:
+            try:
+                matches = self._search_in_file(filepath, keyword)
+                for match in matches:
+                    self._search_results.append({
+                        'filepath': filepath,
+                        'context': match['context'],
+                        'line_num': match['line_num'],
+                        'mtime': filepath.stat().st_mtime
+                    })
+            except Exception as e:
+                print(f"[ERROR] Failed to search in {filepath}: {e}")
+        
+        # Sort by modification time (newest first)
+        self._search_results.sort(key=lambda x: x['mtime'], reverse=True)
+        
+        # Display results
+        self._display_search_results(keyword)
+    
+    def _search_in_file(self, filepath: Path, keyword: str) -> List[dict]:
+        """Search for keyword in file and return matching contexts"""
+        matches = []
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                
+            # Case-insensitive search
+            keyword_lower = keyword.lower()
+            
+            for i, line in enumerate(lines):
+                if keyword_lower in line.lower():
+                    # Get context around the match (the line itself with some cleanup)
+                    context = line.strip()
+                    if len(context) > 100:
+                        # Try to center the keyword in context
+                        idx = context.lower().find(keyword_lower)
+                        start = max(0, idx - 40)
+                        end = min(len(context), idx + len(keyword) + 40)
+                        context = context[start:end]
+                    
+                    # Avoid duplicate matches for same content
+                    if not any(m['context'] == context for m in matches):
+                        matches.append({
+                            'context': context,
+                            'line_num': i + 1
+                        })
+        except Exception as e:
+            print(f"[ERROR] Cannot read file {filepath}: {e}")
+        
+        return matches
+    
+    def _display_search_results(self, keyword: str):
+        """Display search results in history scroll"""
+        # Show result count
+        count = len(self._search_results)
+        self._search_count_label.configure(
+            text=f"找到 {count} 条匹配结果" if count > 0 else f"未找到 \"{keyword}\" 的相关结果"
+        )
+        self._search_count_label.pack(fill="x", padx=30, pady=(0, 10))
+        
+        if count == 0:
+            self._show_no_results(keyword)
+            return
+        
+        # Group results by date
+        current_date = None
+        for result in self._search_results:
+            try:
+                mod_time = datetime.fromtimestamp(result['mtime'])
+                date_str = mod_time.strftime("%Y年%m月%d日")
+                
+                # Check if we need a new date header
+                if date_str != current_date:
+                    current_date = date_str
+                    
+                    # Date header
+                    date_label = ctk.CTkLabel(
+                        self._history_scroll,
+                        text=date_str,
+                        font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+                        text_color=Colors.TEXT_SECONDARY,
+                        anchor="w",
+                    )
+                    date_label.pack(fill="x", pady=(15, 8))
+                
+                # Search result item
+                item = SearchResultItem(
+                    self._history_scroll,
+                    result['filepath'],
+                    result['context'],
+                    keyword,
+                    on_click=self._open_file,
+                )
+                item.pack(fill="x", pady=3)
+            except Exception as e:
+                print(f"[ERROR] Failed to display result: {e}")
+    
+    def _show_no_results(self, keyword: str):
+        """Show no results message"""
+        # Container for centering
+        no_result_frame = ctk.CTkFrame(self._history_scroll, fg_color="transparent")
+        no_result_frame.pack(fill="both", expand=True, pady=50)
+        
+        ctk.CTkLabel(
+            no_result_frame,
+            text="🔍",
+            font=ctk.CTkFont(size=48),
+            text_color=Colors.TEXT_MUTED,
+        ).pack()
+        
+        ctk.CTkLabel(
+            no_result_frame,
+            text=f"未找到包含 \"{keyword}\" 的记录",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=16),
+            text_color=Colors.TEXT_SECONDARY,
+        ).pack(pady=(15, 5))
+        
+        ctk.CTkLabel(
+            no_result_frame,
+            text="尝试使用不同的关键词搜索",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            text_color=Colors.TEXT_MUTED,
+        ).pack()
             
     # ========================================
     # Settings Page
@@ -942,7 +1280,83 @@ class EchoLogApp(ctk.CTk):
         self._timestamp_switch.pack(side="right")
         if OutputConfig.INCLUDE_TIMESTAMPS:
             self._timestamp_switch.select()
+        
+        # ========================================
+        # 飞书集成卡片
+        # ========================================
+        feishu_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=12)
+        feishu_card.pack(fill="x", pady=(20, 5))
+        
+        feishu_header = ctk.CTkFrame(feishu_card, fg_color="transparent")
+        feishu_header.pack(fill="x", padx=20, pady=(15, 10))
+        
+        ctk.CTkLabel(
+            feishu_header,
+            text="🔗 飞书集成",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=16, weight="bold"),
+            text_color=Colors.TEXT_PRIMARY,
+        ).pack(anchor="w")
+        
+        ctk.CTkLabel(
+            feishu_header,
+            text="将每日工作记录同步到飞书多维表格和云文档",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            text_color=Colors.TEXT_SECONDARY,
+        ).pack(anchor="w", pady=(3, 0))
+        
+        # 飞书操作按钮区域
+        feishu_buttons = ctk.CTkFrame(feishu_card, fg_color="transparent")
+        feishu_buttons.pack(fill="x", padx=20, pady=(0, 15))
+        
+        # 同步日报按钮
+        self._sync_daily_btn = ctk.CTkButton(
+            feishu_buttons,
+            text="📅 同步今日日报",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            fg_color=Colors.ACCENT,
+            hover_color=Colors.ACCENT_HOVER,
+            corner_radius=8,
+            height=36,
+            command=self._sync_daily_report,
+        )
+        self._sync_daily_btn.pack(side="left", padx=(0, 10))
+        
+        # 同步周报按钮
+        self._sync_weekly_btn = ctk.CTkButton(
+            feishu_buttons,
+            text="📊 同步周报",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            fg_color="#10B981",
+            hover_color="#059669",
+            corner_radius=8,
+            height=36,
+            command=self._sync_weekly_report,
+        )
+        self._sync_weekly_btn.pack(side="left", padx=(0, 10))
+        
+        # 打开多维表格按钮
+        self._open_bitable_btn = ctk.CTkButton(
+            feishu_buttons,
+            text="📋 打开多维表格",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            fg_color=Colors.TEXT_SECONDARY,
+            hover_color=Colors.SIDEBAR_ACTIVE,
+            corner_radius=8,
+            height=36,
+            command=self._open_bitable,
+        )
+        self._open_bitable_btn.pack(side="left")
+        
+        # 飞书状态指示
+        self._feishu_status = ctk.CTkLabel(
+            feishu_card,
+            text="状态：未同步",
+            font=ctk.CTkFont(family="Microsoft YaHei", size=11),
+            text_color=Colors.TEXT_MUTED,
+        )
+        self._feishu_status.pack(anchor="w", padx=20, pady=(0, 15))
             
+
         # About section
         about_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=12)
         about_card.pack(fill="x", pady=(20, 5))
@@ -1386,11 +1800,106 @@ class EchoLogApp(ctk.CTk):
     def _show_help(self):
         """Show help dialog"""
         webbrowser.open("https://github.com/your-repo/echolog")
+    
+    # ========================================
+    # 飞书集成方法
+    # ========================================
+    
+    def _sync_daily_report(self):
+        """同步今日日报到飞书"""
+        self._feishu_status.configure(text="状态：同步中...", text_color=Colors.WARNING)
+        self._sync_daily_btn.configure(state="disabled")
+        
+        # 在后台线程执行同步
+        def do_sync():
+            try:
+                from feishu import get_feishu_sync_service
+                service = get_feishu_sync_service()
+                result = service.sync_daily_report()
+                
+                # 更新 UI
+                self.after(0, lambda: self._handle_sync_result(result, "日报"))
+            except Exception as e:
+                self.after(0, lambda: self._handle_sync_error(str(e)))
+        
+        threading.Thread(target=do_sync, daemon=True).start()
+    
+    def _sync_weekly_report(self):
+        """同步周报到飞书"""
+        self._feishu_status.configure(text="状态：同步中...", text_color=Colors.WARNING)
+        self._sync_weekly_btn.configure(state="disabled")
+        
+        def do_sync():
+            try:
+                from feishu import get_feishu_sync_service
+                service = get_feishu_sync_service()
+                result = service.sync_weekly_report()
+                
+                self.after(0, lambda: self._handle_sync_result(result, "周报"))
+            except Exception as e:
+                self.after(0, lambda: self._handle_sync_error(str(e)))
+        
+        threading.Thread(target=do_sync, daemon=True).start()
+    
+    def _handle_sync_result(self, result: dict, report_type: str):
+        """处理同步结果"""
+        self._sync_daily_btn.configure(state="normal")
+        self._sync_weekly_btn.configure(state="normal")
+        
+        if result.get("success"):
+            doc_url = result.get("doc_url", "")
+            file_count = result.get("file_count", 0)
+            
+            if file_count == 0:
+                self._feishu_status.configure(
+                    text=f"状态：今日暂无记录",
+                    text_color=Colors.TEXT_MUTED
+                )
+            else:
+                self._feishu_status.configure(
+                    text=f"✅ {report_type}同步成功！共 {file_count} 条记录",
+                    text_color=Colors.SUCCESS
+                )
+                
+                # 询问是否打开文档
+                if doc_url and messagebox.askyesno(
+                    "同步成功",
+                    f"{report_type}已同步到飞书！\n\n是否打开云文档查看？"
+                ):
+                    webbrowser.open(doc_url)
+        else:
+            error = result.get("error", "未知错误")
+            self._feishu_status.configure(
+                text=f"❌ 同步失败: {error[:30]}...",
+                text_color=Colors.ERROR
+            )
+            messagebox.showerror("同步失败", f"同步到飞书失败：\n{error}")
+    
+    def _handle_sync_error(self, error: str):
+        """处理同步错误"""
+        self._sync_daily_btn.configure(state="normal")
+        self._sync_weekly_btn.configure(state="normal")
+        self._feishu_status.configure(
+            text=f"❌ 错误: {error[:30]}...",
+            text_color=Colors.ERROR
+        )
+        messagebox.showerror("同步错误", f"同步过程中发生错误：\n{error}")
+    
+    def _open_bitable(self):
+        """打开飞书多维表格"""
+        import os
+        app_token = os.getenv("FEISHU_BITABLE_APP_TOKEN", "")
+        if app_token:
+            url = f"https://xatc0v8uz5m.feishu.cn/base/{app_token}"
+            webbrowser.open(url)
+        else:
+            messagebox.showwarning("配置缺失", "请先配置 FEISHU_BITABLE_APP_TOKEN 环境变量")
         
     # ========================================
     # Window Events
     # ========================================
         
+
     def _on_closing(self):
         """Handle window close"""
         if self._is_recording:
