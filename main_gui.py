@@ -25,38 +25,38 @@ from config import GUIConfig, OutputConfig, DeepgramConfig
 # Color Theme (Typeless-inspired)
 # ========================================
 class Colors:
-    """Application color palette"""
-    # Sidebar (dark)
-    SIDEBAR_BG = "#1E1E2E"
-    SIDEBAR_HOVER = "#2D2D3D"
-    SIDEBAR_ACTIVE = "#3D3D4D"
-    SIDEBAR_TEXT = "#B0B0B0"
+    """Application color palette - Premium iOS Style"""
+    # Sidebar (Dark elegant)
+    SIDEBAR_BG = "#1C1C1E"
+    SIDEBAR_HOVER = "#2C2C2E"
+    SIDEBAR_ACTIVE = "#5B50D6"  # Use Accent color for active state
+    SIDEBAR_TEXT = "#AEAEB2"
     SIDEBAR_TEXT_ACTIVE = "#FFFFFF"
     
-    # Content area (light)
-    CONTENT_BG = "#FAFAFA"
+    # Content area (iOS Light)
+    CONTENT_BG = "#F5F5F7"  # iOS system gray
     CONTENT_CARD = "#FFFFFF"
-    CONTENT_BORDER = "#E5E5E5"
+    CONTENT_BORDER = "#E5E5EA"
     
     # Text colors
-    TEXT_PRIMARY = "#1A1A2E"
-    TEXT_SECONDARY = "#6B7280"
-    TEXT_MUTED = "#9CA3AF"
+    TEXT_PRIMARY = "#000000"
+    TEXT_SECONDARY = "#8E8E93"
+    TEXT_MUTED = "#C7C7CC"
     
-    # Accent colors (Blue-Purple theme)
-    ACCENT = "#6366F1"       # Indigo
-    ACCENT_HOVER = "#4F46E5"
-    ACCENT_LIGHT = "#E0E7FF"
-    RECORDING = "#EF4444"
-    RECORDING_HOVER = "#DC2626"
-    PAUSED = "#F59E0B"
-    DANGER = "#EF4444"
-    DANGER_HOVER = "#DC2626"
+    # Accent colors (Soft Blue-Purple)
+    ACCENT = "#5B50D6"       # Premium Blurple
+    ACCENT_HOVER = "#4A40B5"
+    ACCENT_LIGHT = "#EBEBF5" # Very light purple for backgrounds
     
-    # Status
-    SUCCESS = "#10B981"
-    WARNING = "#F59E0B"
-    ERROR = "#EF4444"
+    # Functional Colors (iOS Standard)
+    RECORDING = "#FF3B30"    # iOS Red
+    RECORDING_HOVER = "#D70015"
+    PAUSED = "#FF9500"       # iOS Orange
+    SUCCESS = "#34C759"      # iOS Green
+    DANGER = "#FF3B30"
+    DANGER_HOVER = "#D70015"
+    WARNING = "#FFCC00"      # iOS Yellow
+    ERROR = "#FF3B30"
 
 
 # ========================================
@@ -66,7 +66,7 @@ class NavItem(ctk.CTkFrame):
     """Sidebar navigation item"""
     
     def __init__(self, parent, icon: str, text: str, command=None, **kwargs):
-        super().__init__(parent, fg_color="transparent", **kwargs)
+        super().__init__(parent, fg_color="transparent", corner_radius=10, **kwargs)
         
         self.command = command
         self._is_active = False
@@ -79,21 +79,21 @@ class NavItem(ctk.CTkFrame):
         self.icon_label = ctk.CTkLabel(
             self,
             text=icon,
-            font=ctk.CTkFont(size=18),
+            font=ctk.CTkFont(size=20),  # Larger icons
             text_color=Colors.SIDEBAR_TEXT,
             width=40,
         )
-        self.icon_label.pack(side="left", padx=(15, 5))
+        self.icon_label.pack(side="left", padx=(15, 10), pady=12)
         
         # Text
         self.text_label = ctk.CTkLabel(
             self,
             text=text,
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14),
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"), # Bolder text
             text_color=Colors.SIDEBAR_TEXT,
             anchor="w",
         )
-        self.text_label.pack(side="left", fill="x", expand=True)
+        self.text_label.pack(side="left", fill="x", pady=12)
         
         # Bind events
         for widget in [self, self.icon_label, self.text_label]:
@@ -104,10 +104,15 @@ class NavItem(ctk.CTkFrame):
     def _on_enter(self, event):
         if not self._is_active:
             self.configure(fg_color=Colors.SIDEBAR_HOVER)
+            # Subtle hover effect for text
+            self.icon_label.configure(text_color="#FFFFFF")
+            self.text_label.configure(text_color="#FFFFFF")
             
     def _on_leave(self, event):
         if not self._is_active:
             self.configure(fg_color="transparent")
+            self.icon_label.configure(text_color=Colors.SIDEBAR_TEXT)
+            self.text_label.configure(text_color=Colors.SIDEBAR_TEXT)
             
     def _on_click(self, event):
         if self.command:
@@ -133,7 +138,7 @@ class SearchResultItem(ctk.CTkFrame):
     
     def __init__(self, parent, filepath: Path, match_context: str, keyword: str, 
                  on_click=None, **kwargs):
-        super().__init__(parent, fg_color=Colors.CONTENT_CARD, corner_radius=8, **kwargs)
+        super().__init__(parent, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER, **kwargs)
         
         self.filepath = filepath
         self.on_click = on_click
@@ -159,7 +164,7 @@ class SearchResultItem(ctk.CTkFrame):
         self.name_label = ctk.CTkLabel(
             top_row,
             text=f"📄 {filepath.name}",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=13, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
             anchor="w",
         )
@@ -169,7 +174,7 @@ class SearchResultItem(ctk.CTkFrame):
         self.time_label = ctk.CTkLabel(
             top_row,
             text=time_str,
-            font=ctk.CTkFont(family="Microsoft YaHei", size=11),
+            font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color=Colors.TEXT_MUTED,
             anchor="e",
         )
@@ -179,7 +184,7 @@ class SearchResultItem(ctk.CTkFrame):
         self.context_label = ctk.CTkLabel(
             self.content_frame,
             text=f"...{match_context}...",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_SECONDARY,
             anchor="w",
             wraplength=500,
@@ -211,7 +216,7 @@ class HistoryItem(ctk.CTkFrame):
     """History list item showing file info"""
     
     def __init__(self, parent, filepath: Path, on_click=None, on_delete=None, **kwargs):
-        super().__init__(parent, fg_color=Colors.CONTENT_CARD, corner_radius=8, **kwargs)
+        super().__init__(parent, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER, **kwargs)
         
         self.filepath = filepath
         self.on_click = on_click
@@ -251,7 +256,7 @@ class HistoryItem(ctk.CTkFrame):
         self.time_label = ctk.CTkLabel(
             self.left_frame,
             text=time_str,
-            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            font=ctk.CTkFont(family="Segoe UI", size=13),
             text_color=Colors.TEXT_SECONDARY,
             anchor="w",
         )
@@ -261,7 +266,7 @@ class HistoryItem(ctk.CTkFrame):
         self.preview_label = ctk.CTkLabel(
             self.left_frame,
             text=preview if preview else "空文件",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14),
+            font=ctk.CTkFont(family="Segoe UI", size=14),
             text_color=Colors.TEXT_PRIMARY if preview else Colors.TEXT_MUTED,
             anchor="w",
             wraplength=450,
@@ -426,7 +431,7 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             logo_frame,
             text="🎙️ EchoLog",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=20, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=20, weight="bold"),
             text_color="#FFFFFF",
         ).pack(side="left", padx=20)
         
@@ -435,19 +440,19 @@ class EchoLogApp(ctk.CTk):
             self._sidebar, "🏠", "首页",
             command=lambda: self._show_page("home")
         )
-        self._nav_items["home"].pack(fill="x", pady=2)
+        self._nav_items["home"].pack(fill="x", pady=4, padx=10) # Add horizontal padding
         
         self._nav_items["history"] = NavItem(
             self._sidebar, "📜", "历史记录",
             command=lambda: self._show_page("history")
         )
-        self._nav_items["history"].pack(fill="x", pady=2)
+        self._nav_items["history"].pack(fill="x", pady=4, padx=10)
         
         self._nav_items["settings"] = NavItem(
             self._sidebar, "⚙️", "设置",
             command=lambda: self._show_page("settings")
         )
-        self._nav_items["settings"].pack(fill="x", pady=2)
+        self._nav_items["settings"].pack(fill="x", pady=4, padx=10)
         
         # Bottom section
         bottom_frame = ctk.CTkFrame(self._sidebar, fg_color="transparent")
@@ -457,7 +462,7 @@ class EchoLogApp(ctk.CTk):
         self._path_label = ctk.CTkLabel(
             bottom_frame,
             text=f"📁 {self._get_short_path()}",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=11),
+            font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color=Colors.SIDEBAR_TEXT,
             wraplength=160,
         )
@@ -467,17 +472,17 @@ class EchoLogApp(ctk.CTk):
         open_folder_btn = ctk.CTkButton(
             bottom_frame,
             text="📂 打开文件夹",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=13),
             fg_color=Colors.SIDEBAR_HOVER,
             hover_color=Colors.SIDEBAR_ACTIVE,
-            height=35,
-            corner_radius=8,
+            height=40,
+            corner_radius=20,
             command=self._open_output_folder,
         )
         open_folder_btn.pack(fill="x", padx=15, pady=(0, 10))
         
         # Help button
-        NavItem(bottom_frame, "❓", "帮助", command=self._show_help).pack(fill="x", pady=2)
+        NavItem(bottom_frame, "❓", "帮助", command=self._show_help).pack(fill="x", pady=10, padx=10)
         
         # ========================================
         # Right Content Area
@@ -513,16 +518,21 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             title_frame,
             text="实时听写",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=24, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=24, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(side="left")
         
-        # Status indicator
-        self._status_frame = ctk.CTkFrame(title_frame, fg_color="transparent")
+        # Status indicator (Pill shape)
+        self._status_frame = ctk.CTkFrame(title_frame, fg_color=Colors.ACCENT_LIGHT, corner_radius=15, height=30)
         self._status_frame.pack(side="right")
+        self._status_frame.pack_propagate(False) # Fixed height for pill look
+        self._status_frame.configure(width=100)  # Initial width
+        
+        inner_status = ctk.CTkFrame(self._status_frame, fg_color="transparent")
+        inner_status.pack(expand=True, fill="both", padx=10)
         
         self._status_dot = ctk.CTkLabel(
-            self._status_frame,
+            inner_status,
             text="●",
             font=ctk.CTkFont(size=12),
             text_color=Colors.SUCCESS,
@@ -530,22 +540,22 @@ class EchoLogApp(ctk.CTk):
         self._status_dot.pack(side="left", padx=(0, 5))
         
         self._status_label = ctk.CTkLabel(
-            self._status_frame,
+            inner_status,
             text="就绪",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
-            text_color=Colors.TEXT_SECONDARY,
+            font=ctk.CTkFont(family="Segoe UI", size=13, weight="bold"),
+            text_color=Colors.ACCENT,
         )
         self._status_label.pack(side="left")
         
         # Text display card
-        text_card = ctk.CTkFrame(page, fg_color=Colors.CONTENT_CARD, corner_radius=12)
+        text_card = ctk.CTkFrame(page, fg_color=Colors.CONTENT_CARD, corner_radius=20, border_width=1, border_color=Colors.CONTENT_BORDER)
         text_card.pack(fill="both", expand=True, padx=30, pady=(0, 20))
         
         # Current file indicator
         self._file_indicator = ctk.CTkLabel(
             text_card,
             text="📄 点击「开始录音」创建新文件",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_MUTED,
         )
         self._file_indicator.pack(anchor="w", padx=20, pady=(15, 5))
@@ -553,7 +563,7 @@ class EchoLogApp(ctk.CTk):
         # Text display
         self._text_display = ctk.CTkTextbox(
             text_card,
-            font=ctk.CTkFont(family="Microsoft YaHei", size=15),
+            font=ctk.CTkFont(family="Segoe UI", size=15),
             wrap="word",
             state="disabled",
             fg_color=Colors.CONTENT_CARD,
@@ -569,63 +579,63 @@ class EchoLogApp(ctk.CTk):
         self._text_display.tag_config("timestamp", foreground=Colors.ACCENT)
         self._text_display.tag_config("system", foreground=Colors.WARNING)
         
-        # Control buttons
-        control_frame = ctk.CTkFrame(page, fg_color="transparent", height=70)
-        control_frame.pack(fill="x", padx=30, pady=(0, 30))
-        control_frame.pack_propagate(False)
+        # Control buttons container (Centered bottom)
+        control_container = ctk.CTkFrame(page, fg_color="transparent")
+        control_container.pack(fill="x", padx=30, pady=(0, 40))
         
-        # Center the buttons
-        btn_container = ctk.CTkFrame(control_frame, fg_color="transparent")
-        btn_container.pack(expand=True)
+        # Center alignment frame
+        center_frame = ctk.CTkFrame(control_container, fg_color="transparent")
+        center_frame.pack(expand=True)
         
-        # Pause button
+        # Pause button (Left pill)
         self._pause_btn = ctk.CTkButton(
-            btn_container,
-            text="⏸️ 暂停",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14),
-            width=100,
-            height=45,
-            corner_radius=22,
+            center_frame,
+            text="⏸️",
+            font=ctk.CTkFont(size=20),
+            width=60,
+            height=60,
+            corner_radius=30,
             fg_color=Colors.CONTENT_CARD,
-            hover_color=Colors.CONTENT_BORDER,
-            text_color=Colors.TEXT_PRIMARY,
+            hover_color=Colors.ACCENT_LIGHT,
+            text_color=Colors.ACCENT,
             border_width=1,
             border_color=Colors.CONTENT_BORDER,
             state="disabled",
             command=self._toggle_pause,
         )
-        self._pause_btn.pack(side="left", padx=10)
+        self._pause_btn.pack(side="left", padx=20)
         
-        # Main record button
+        # Main Record Button (Big Center Circle)
+        # Using a large size and radius to make it distinct
         self._record_btn = ctk.CTkButton(
-            btn_container,
-            text="🎙️ 开始录音",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=16, weight="bold"),
-            width=160,
-            height=50,
-            corner_radius=25,
+            center_frame,
+            text="🎙️",
+            font=ctk.CTkFont(size=32),
+            width=80,
+            height=80,
+            corner_radius=40,
             fg_color=Colors.ACCENT,
             hover_color=Colors.ACCENT_HOVER,
             text_color="#FFFFFF",
             command=self._toggle_recording,
         )
-        self._record_btn.pack(side="left", padx=10)
+        self._record_btn.pack(side="left", padx=20)
         
-        # Stop button (only visible when recording)
+        # Stop button (Right pill)
         self._stop_btn = ctk.CTkButton(
-            btn_container,
-            text="⏹️ 停止",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14),
-            width=100,
-            height=45,
-            corner_radius=22,
+            center_frame,
+            text="⏹️",
+            font=ctk.CTkFont(size=20),
+            width=60,
+            height=60,
+            corner_radius=30,
             fg_color=Colors.RECORDING,
             hover_color=Colors.RECORDING_HOVER,
             text_color="#FFFFFF",
             state="disabled",
             command=self._stop_recording,
         )
-        self._stop_btn.pack(side="left", padx=10)
+        self._stop_btn.pack(side="left", padx=20)
         
         return page
         
@@ -644,7 +654,7 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             title_frame,
             text="历史记录",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=24, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=24, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(side="left")
         
@@ -656,7 +666,7 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkButton(
             btn_bar,
             text="📂 导入",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             width=80,
             height=32,
             corner_radius=16,
@@ -670,7 +680,7 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkButton(
             btn_bar,
             text="🔄 刷新",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             width=80,
             height=32,
             corner_radius=16,
@@ -683,7 +693,7 @@ class EchoLogApp(ctk.CTk):
         ).pack(side="left", padx=5)
         
         # Info card
-        info_card = ctk.CTkFrame(page, fg_color=Colors.CONTENT_CARD, corner_radius=12, height=80)
+        info_card = ctk.CTkFrame(page, fg_color=Colors.CONTENT_CARD, corner_radius=16, height=80, border_width=1, border_color=Colors.CONTENT_BORDER)
         info_card.pack(fill="x", padx=30, pady=(0, 20))
         info_card.pack_propagate(False)
         
@@ -693,14 +703,14 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             info_inner,
             text="🔒 您的数据保持私密",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(anchor="w")
         
         ctk.CTkLabel(
             info_inner,
             text="所有听写记录仅保存在本地，不会上传到云端。音频不会被保存，只保留文字记录。",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_SECONDARY,
         ).pack(anchor="w", pady=(5, 0))
         
@@ -727,7 +737,7 @@ class EchoLogApp(ctk.CTk):
         self._search_entry = ctk.CTkEntry(
             search_container,
             placeholder_text="搜索关键词...",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            font=ctk.CTkFont(family="Segoe UI", size=13),
             textvariable=self._search_var,
             fg_color="transparent",
             border_width=0,
@@ -756,7 +766,7 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkButton(
             search_frame,
             text="🔎 搜索",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             width=80,
             height=40,
             corner_radius=20,
@@ -770,7 +780,7 @@ class EchoLogApp(ctk.CTk):
         self._search_count_label = ctk.CTkLabel(
             page,
             text="",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_MUTED,
         )
         # Don't pack initially - will show when searching
@@ -801,7 +811,7 @@ class EchoLogApp(ctk.CTk):
             ctk.CTkLabel(
                 self._history_scroll,
                 text="暂无历史记录",
-                font=ctk.CTkFont(family="Microsoft YaHei", size=14),
+                font=ctk.CTkFont(family="Segoe UI", size=14),
                 text_color=Colors.TEXT_MUTED,
             ).pack(pady=50)
             return
@@ -814,7 +824,7 @@ class EchoLogApp(ctk.CTk):
             ctk.CTkLabel(
                 self._history_scroll,
                 text="暂无历史记录",
-                font=ctk.CTkFont(family="Microsoft YaHei", size=14),
+                font=ctk.CTkFont(family="Segoe UI", size=14),
                 text_color=Colors.TEXT_MUTED,
             ).pack(pady=50)
             return
@@ -834,7 +844,7 @@ class EchoLogApp(ctk.CTk):
                     date_label = ctk.CTkLabel(
                         self._history_scroll,
                         text=date_str,
-                        font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+                        font=ctk.CTkFont(family="Segoe UI", size=13),
                         text_color=Colors.TEXT_SECONDARY,
                         anchor="w",
                     )
@@ -1050,7 +1060,7 @@ class EchoLogApp(ctk.CTk):
                     date_label = ctk.CTkLabel(
                         self._history_scroll,
                         text=date_str,
-                        font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+                        font=ctk.CTkFont(family="Segoe UI", size=13),
                         text_color=Colors.TEXT_SECONDARY,
                         anchor="w",
                     )
@@ -1084,14 +1094,14 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             no_result_frame,
             text=f"未找到包含 \"{keyword}\" 的记录",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=16),
+            font=ctk.CTkFont(family="Segoe UI", size=16),
             text_color=Colors.TEXT_SECONDARY,
         ).pack(pady=(15, 5))
         
         ctk.CTkLabel(
             no_result_frame,
             text="尝试使用不同的关键词搜索",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            font=ctk.CTkFont(family="Segoe UI", size=13),
             text_color=Colors.TEXT_MUTED,
         ).pack()
             
@@ -1110,7 +1120,7 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             title_frame,
             text="设置",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=24, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=24, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(side="left")
         
@@ -1119,7 +1129,7 @@ class EchoLogApp(ctk.CTk):
         settings_scroll.pack(fill="both", expand=True, padx=30, pady=(0, 20))
         
         # Storage path setting
-        path_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=12)
+        path_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER)
         path_card.pack(fill="x", pady=5)
         
         path_inner = ctk.CTkFrame(path_card, fg_color="transparent")
@@ -1131,14 +1141,14 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             path_left,
             text="📁 存储路径",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(anchor="w")
         
         self._path_display = ctk.CTkLabel(
             path_left,
             text=str(OutputConfig.OUTPUT_DIR),
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_SECONDARY,
         )
         self._path_display.pack(anchor="w", pady=(3, 0))
@@ -1146,7 +1156,7 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkButton(
             path_inner,
             text="更改",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             width=70,
             height=32,
             corner_radius=16,
@@ -1156,7 +1166,7 @@ class EchoLogApp(ctk.CTk):
         ).pack(side="right")
         
         # Model selection
-        model_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=12)
+        model_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER)
         model_card.pack(fill="x", pady=5)
         
         model_inner = ctk.CTkFrame(model_card, fg_color="transparent")
@@ -1168,14 +1178,14 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             model_left,
             text="🤖 识别模型",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(anchor="w")
         
         ctk.CTkLabel(
             model_left,
             text="选择 Deepgram 语音识别模型",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_SECONDARY,
         ).pack(anchor="w", pady=(3, 0))
         
@@ -1186,7 +1196,7 @@ class EchoLogApp(ctk.CTk):
             model_inner,
             values=model_options,
             variable=self._model_var,
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             width=120,
             height=32,
             corner_radius=8,
@@ -1201,7 +1211,7 @@ class EchoLogApp(ctk.CTk):
         self._model_dropdown.pack(side="right", padx=(10, 0))
         
         # Language selection
-        lang_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=12)
+        lang_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER)
         lang_card.pack(fill="x", pady=5)
         
         lang_inner = ctk.CTkFrame(lang_card, fg_color="transparent")
@@ -1213,14 +1223,14 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             lang_left,
             text="🌐 识别语言",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(anchor="w")
         
         ctk.CTkLabel(
             lang_left,
             text="选择语音识别的目标语言",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_SECONDARY,
         ).pack(anchor="w", pady=(3, 0))
         
@@ -1232,7 +1242,7 @@ class EchoLogApp(ctk.CTk):
             lang_inner,
             values=lang_options,
             variable=self._lang_var,
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             width=120,
             height=32,
             corner_radius=8,
@@ -1247,7 +1257,7 @@ class EchoLogApp(ctk.CTk):
         self._lang_dropdown.pack(side="right", padx=(10, 0))
         
         # Timestamp setting
-        timestamp_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=12)
+        timestamp_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER)
         timestamp_card.pack(fill="x", pady=5)
         
         timestamp_inner = ctk.CTkFrame(timestamp_card, fg_color="transparent")
@@ -1259,14 +1269,14 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             timestamp_left,
             text="⏱️ 显示时间戳",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(anchor="w")
         
         ctk.CTkLabel(
             timestamp_left,
             text="在每条记录前显示时间",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_SECONDARY,
         ).pack(anchor="w", pady=(3, 0))
         
@@ -1282,9 +1292,8 @@ class EchoLogApp(ctk.CTk):
             self._timestamp_switch.select()
         
         # ========================================
-        # 飞书集成卡片
-        # ========================================
-        feishu_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=12)
+        # Feishu integration card
+        feishu_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER)
         feishu_card.pack(fill="x", pady=(20, 5))
         
         feishu_header = ctk.CTkFrame(feishu_card, fg_color="transparent")
@@ -1293,14 +1302,14 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             feishu_header,
             text="🔗 飞书集成",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=16, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=16, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(anchor="w")
         
         ctk.CTkLabel(
             feishu_header,
             text="将每日工作记录同步到飞书多维表格和云文档",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_SECONDARY,
         ).pack(anchor="w", pady=(3, 0))
         
@@ -1312,7 +1321,7 @@ class EchoLogApp(ctk.CTk):
         self._sync_daily_btn = ctk.CTkButton(
             feishu_buttons,
             text="📅 同步今日日报",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            font=ctk.CTkFont(family="Segoe UI", size=13),
             fg_color=Colors.ACCENT,
             hover_color=Colors.ACCENT_HOVER,
             corner_radius=8,
@@ -1325,7 +1334,7 @@ class EchoLogApp(ctk.CTk):
         self._sync_weekly_btn = ctk.CTkButton(
             feishu_buttons,
             text="📊 同步周报",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            font=ctk.CTkFont(family="Segoe UI", size=13),
             fg_color="#10B981",
             hover_color="#059669",
             corner_radius=8,
@@ -1338,7 +1347,7 @@ class EchoLogApp(ctk.CTk):
         self._open_bitable_btn = ctk.CTkButton(
             feishu_buttons,
             text="📋 打开多维表格",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=13),
+            font=ctk.CTkFont(family="Segoe UI", size=13),
             fg_color=Colors.TEXT_SECONDARY,
             hover_color=Colors.SIDEBAR_ACTIVE,
             corner_radius=8,
@@ -1351,14 +1360,85 @@ class EchoLogApp(ctk.CTk):
         self._feishu_status = ctk.CTkLabel(
             feishu_card,
             text="状态：未同步",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=11),
+            font=ctk.CTkFont(family="Segoe UI", size=11),
             text_color=Colors.TEXT_MUTED,
         )
         self._feishu_status.pack(anchor="w", padx=20, pady=(0, 15))
             
+        # ========================================
+        # Notion integration card
+        notion_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER)
+        notion_card.pack(fill="x", pady=(20, 5))
+        
+        notion_header = ctk.CTkFrame(notion_card, fg_color="transparent")
+        notion_header.pack(fill="x", padx=20, pady=(15, 10))
+        
+        ctk.CTkLabel(
+            notion_header,
+            text="📓 Notion 集成",
+            font=ctk.CTkFont(family="Segoe UI", size=16, weight="bold"),
+            text_color=Colors.TEXT_PRIMARY,
+        ).pack(anchor="w")
+        
+        ctk.CTkLabel(
+            notion_header,
+            text="将每日工作记录同步到 Notion 数据库",
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            text_color=Colors.TEXT_SECONDARY,
+        ).pack(anchor="w", pady=(3, 0))
+        
+        # Notion Buttons
+        notion_buttons = ctk.CTkFrame(notion_card, fg_color="transparent")
+        notion_buttons.pack(fill="x", padx=20, pady=(0, 15))
+        
+        self._sync_notion_btn = ctk.CTkButton(
+            notion_buttons,
+            text="📅 同步日报到 Notion",
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+            fg_color=Colors.ACCENT,
+            hover_color=Colors.ACCENT_HOVER,
+            corner_radius=8,
+            height=36,
+            command=self._sync_notion_daily_report,
+        )
+        self._sync_notion_btn.pack(side="left", padx=(0, 10))
+
+        self._sync_notion_weekly_btn = ctk.CTkButton(
+            notion_buttons,
+            text="📊 同步周报到 Notion",
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+            fg_color="#10B981", 
+            hover_color="#059669",
+            corner_radius=8,
+            height=36,
+            command=self._sync_notion_weekly_report,
+        )
+        self._sync_notion_weekly_btn.pack(side="left", padx=(0, 10))
+
+        self._open_notion_btn = ctk.CTkButton(
+            notion_buttons,
+            text="🔗 打开页面",
+            font=ctk.CTkFont(family="Segoe UI", size=13),
+            fg_color=Colors.TEXT_SECONDARY,
+            hover_color=Colors.SIDEBAR_ACTIVE,
+            corner_radius=8,
+            height=36,
+            state="disabled",
+            command=self._open_notion_page,
+        )
+        self._open_notion_btn.pack(side="left")
+        
+        self._notion_status = ctk.CTkLabel(
+            notion_card,
+            text="状态：未同步",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            text_color=Colors.TEXT_MUTED,
+        )
+        self._notion_status.pack(anchor="w", padx=20, pady=(0, 15))
+            
 
         # About section
-        about_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=12)
+        about_card = ctk.CTkFrame(settings_scroll, fg_color=Colors.CONTENT_CARD, corner_radius=16, border_width=1, border_color=Colors.CONTENT_BORDER)
         about_card.pack(fill="x", pady=(20, 5))
         
         about_inner = ctk.CTkFrame(about_card, fg_color="transparent")
@@ -1367,14 +1447,14 @@ class EchoLogApp(ctk.CTk):
         ctk.CTkLabel(
             about_inner,
             text="关于 EchoLog",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=14, weight="bold"),
+            font=ctk.CTkFont(family="Segoe UI", size=14, weight="bold"),
             text_color=Colors.TEXT_PRIMARY,
         ).pack(anchor="w")
         
         ctk.CTkLabel(
             about_inner,
             text="版本 1.0.0 | 桌面智能听写助手\n利用 Deepgram API 实现高精度实时语音转文字",
-            font=ctk.CTkFont(family="Microsoft YaHei", size=12),
+            font=ctk.CTkFont(family="Segoe UI", size=12),
             text_color=Colors.TEXT_SECONDARY,
             justify="left",
         ).pack(anchor="w", pady=(5, 0))
@@ -1894,7 +1974,172 @@ class EchoLogApp(ctk.CTk):
             webbrowser.open(url)
         else:
             messagebox.showwarning("配置缺失", "请先配置 FEISHU_BITABLE_APP_TOKEN 环境变量")
+
+    # ========================================
+    # Notion Integration
+    # ========================================
+
+    def _sync_notion_daily_report(self):
+        """Sync daily report to Notion"""
+        self._notion_status.configure(text="状态：同步中...", text_color=Colors.WARNING)
+        self._sync_notion_btn.configure(state="disabled")
         
+        def do_sync():
+            try:
+                # 1. Gather content
+                from feishu.summary import get_daily_summary_service
+                summary_service = get_daily_summary_service()
+                data = summary_service.aggregate_daily_content(datetime.now())
+                
+                if not data["contents"]:
+                     self.after(0, lambda: self._handle_notion_sync_result({"success": False, "error": "今日暂无记录"}))
+                     return
+
+                # Merge content
+                raw_content = "\n\n".join([f"### {c['time']} - {c['filename']}\n{c['content']}" for c in data["contents"]])
+                
+                report_data = {
+                    "title": f"EchoLog Daily {datetime.now().strftime('%Y-%m-%d')}",
+                    "type": "日报",
+                    "text": raw_content,
+                    "summary": "AI处理中...",
+                    "keywords": [],
+                    "action_items": [],
+                    "risks": [],
+                    "inspirations": []
+                }
+                
+                # 2. AI Processing
+                try:
+                    from feishu.ai_processor import get_ai_processor
+                    processor = get_ai_processor()
+                    ai_result = processor.process_content(raw_content)
+                    
+                    if ai_result.get("success"):
+                         report_data.update({
+                            "summary": ai_result.get("summary", ""),
+                            "keywords": ai_result.get("keywords", []),
+                            "action_items": ai_result.get("todos", []),
+                            "risks": ai_result.get("risks", []),
+                            "inspirations": ai_result.get("ideas", []),
+                         })
+                except Exception as e:
+                    print(f"AI processing failed within Notion sync: {e}")
+                    report_data["summary"] = raw_content[:200] + "..."
+
+                # 3. Sync to Notion
+                from notion.sync import NotionSyncService
+                service = NotionSyncService()
+                url = service.sync_daily_report(report_data)
+                
+                self.after(0, lambda: self._handle_notion_sync_result({"success": True, "url": url}))
+                
+            except Exception as e:
+                 self.after(0, lambda: self._handle_notion_sync_result({"success": False, "error": str(e)}))
+        
+        threading.Thread(target=do_sync, daemon=True).start()
+
+    def _sync_notion_weekly_report(self):
+        """Sync weekly report to Notion"""
+        self._notion_status.configure(text="状态：周报生成中...", text_color=Colors.WARNING)
+        self._sync_notion_weekly_btn.configure(state="disabled")
+        
+        def do_sync():
+            try:
+                # 1. Gather content
+                from feishu.summary import get_daily_summary_service
+                summary_service = get_daily_summary_service()
+                # Use end_date as today
+                data = summary_service.aggregate_weekly_content(datetime.now())
+                
+                if not data["contents"]:
+                     self.after(0, lambda: self._handle_notion_sync_result({"success": False, "error": "本周暂无记录"}))
+                     return
+
+                # Merge content
+                raw_content = "\n\n".join([f"### {c.get('filename','')}\n{c.get('content','')}" for c in data["contents"]])
+                
+                start_str = data.get("start_date").strftime('%Y-%m-%d')
+                end_str = data.get("end_date").strftime('%Y-%m-%d')
+                
+                report_data = {
+                    "title": f"EchoLog Weekly {start_str} ~ {end_str}",
+                    "type": "周报",
+                    "text": raw_content,
+                    "summary": "AI处理中...",
+                    "keywords": [],
+                    "action_items": [],
+                    "risks": [],
+                    "inspirations": []
+                }
+                
+                # 2. AI Processing (Summarize the whole week)
+                try:
+                    from feishu.ai_processor import get_ai_processor
+                    processor = get_ai_processor()
+                    # Limit content length for AI to avoid too large context
+                    ai_result = processor.process_content(raw_content[:20000]) 
+                    
+                    if ai_result.get("success"):
+                         report_data.update({
+                            "summary": ai_result.get("summary", ""),
+                            "keywords": ai_result.get("keywords", []),
+                            "action_items": ai_result.get("todos", []),
+                            "risks": ai_result.get("risks", []),
+                            "inspirations": ai_result.get("ideas", []),
+                         })
+                except Exception as e:
+                    print(f"AI processing failed within Notion sync: {e}")
+                    report_data["summary"] = raw_content[:500] + "..."
+
+                # 3. Sync to Notion
+                from notion.sync import NotionSyncService
+                service = NotionSyncService()
+                url = service.sync_daily_report(report_data) # Reuse same method for creating page
+                
+                self.after(0, lambda: self._handle_notion_sync_result({"success": True, "url": url}))
+                
+            except Exception as e:
+                 self.after(0, lambda: self._handle_notion_sync_result({"success": False, "error": str(e)}))
+        
+        threading.Thread(target=do_sync, daemon=True).start()
+
+    def _open_notion_page(self):
+        """Open the last synced Notion page"""
+        if hasattr(self, '_last_notion_url') and self._last_notion_url:
+            webbrowser.open(self._last_notion_url)
+
+    def _handle_notion_sync_result(self, result: dict):
+        """Handle Notion sync result"""
+        self._sync_notion_btn.configure(state="normal")
+        self._sync_notion_weekly_btn.configure(state="normal")
+        
+        if result.get("success"):
+            url = result.get("url", "")
+            self._last_notion_url = url
+            
+            self._notion_status.configure(
+                text="✅ Notion 同步成功！",
+                text_color=Colors.SUCCESS
+            )
+            
+            if url:
+                self._open_notion_btn.configure(state="normal")
+                # Ask to open?
+                if messagebox.askyesno("成功", "已成功同步到 Notion！\n是否立即在浏览器中打开？"):
+                    webbrowser.open(url)
+            else:
+                messagebox.showinfo("成功", "已成功同步到 Notion！")
+                
+        else:
+            error = result.get("error", "未知错误")
+            self._notion_status.configure(
+                text=f"❌ 同步失败: {error[:20]}...",
+                text_color=Colors.ERROR
+            )
+            if error != "今日暂无记录" and error != "本周暂无记录":
+                messagebox.showerror("同步失败", f"同步到 Notion 失败：\n{error}")
+
     # ========================================
     # Window Events
     # ========================================

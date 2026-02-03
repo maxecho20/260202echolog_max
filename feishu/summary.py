@@ -56,7 +56,51 @@ class DailySummaryService:
                 return f.read()
         except:
             return ""
-    
+
+    def aggregate_weekly_content(self, end_date: Optional[datetime] = None) -> Dict[str, Any]:
+        """聚合一周的内容 (从周一到指定日期/今天)"""
+        if end_date is None:
+            end_date = datetime.now()
+        
+        # Calculate start of the week (Monday)
+        start_date = end_date - timedelta(days=end_date.weekday())
+        start_date = start_date.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        all_contents = []
+        total_words = 0
+        file_count = 0
+        all_files = []
+        
+        # Iterate through each day of the week up to end_date
+        for i in range(7):
+            current_date = start_date + timedelta(days=i)
+            if current_date.date() > end_date.date():
+                break
+            
+            data = self.aggregate_daily_content(current_date)
+            if data["contents"]:
+                 # Add a separator/header for the day
+                 all_contents.append({
+                     "filename": f"📅 {current_date.strftime('%Y-%m-%d %A')}", 
+                     "time": "", 
+                     "content": f"=== {current_date.strftime('%Y-%m-%d')} Summary ===",
+                     "words": 0
+                 })
+                 all_contents.extend(data["contents"])
+                 all_files.extend(data["files"])
+                 total_words += data["total_words"]
+                 file_count += data["file_count"]
+        
+        return {
+            "date": end_date,
+            "start_date": start_date,
+            "end_date": end_date,
+            "files": all_files,
+            "contents": all_contents,
+            "total_words": total_words,
+            "file_count": file_count
+        }
+
     def aggregate_daily_content(self, date: Optional[datetime] = None) -> Dict[str, Any]:
         """
         聚合一天的所有内容
